@@ -81,7 +81,7 @@ class Users:
         else:
             self.nb_main_rooms = int(value)
 
-    def __init__(self, building, area, year_of_construction, retrofit, SIA2024=None):
+    def __init__(self, building, area, year_of_construction, retrofit, SIA2024=None, nb_flats=None):
         """
         Constructor of Users class.
 
@@ -91,7 +91,7 @@ class Users:
         """
 
         self.building = building
-        self.nb_flats = None
+        self.nb_flats = nb_flats
         self.annual_el_demand_per_flat = None
         self.nb_rooms = None
         self.nb_main_rooms = None
@@ -121,7 +121,9 @@ class Users:
         if self.building in {"OB", "SC", "GS", "RE"}:
             self.building_zones = self.SIA2024[self.building]
 
-        self.generate_number_flats_and_rooms(area)
+        if self.nb_flats is None:
+            self.generate_number_flats_and_rooms(area)
+
         self.generate_number_occupants(area)
         self.generate_annual_el_consumption_residential()
         self.generate_annual_app_el_consumption_non_residential(
