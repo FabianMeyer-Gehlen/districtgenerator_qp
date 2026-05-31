@@ -12,6 +12,7 @@ import richardsonpy.classes.appliance as app_model
 import richardsonpy.classes.lighting as light_model
 import districtgenerator.functions._5R1C as heating_5R1C
 import districtgenerator.functions._7R2C as heating_7R2C
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 RES_BUILDINGS = {"SFH", "TH", "MFH", "AB"}
 
@@ -664,37 +665,33 @@ class Users:
 
         # Residential buildings
         if self.building in {"SFH", "TH", "MFH", "AB"}:
+            with ProcessPoolExecutor(max_workers=16) as ex:
+                # save results in simple lists
+                futures = [
+                    ex.submit(self.calcSingleFlat, j, irradiation, nb_days, site, holidays, time_resolution,
+                              time_horizon, building, building_devices_data, path, initial_day, gen_cars)
+                    for j in range(self.nb_flats)
+                ]
+                # wait for all results to add them in the main thread
 
-            current_index = 0  # To keep track of the starting index for car profiles Id in each flat
-            for j in range(self.nb_flats):
-                temp_obj = Profiles(number_occupants=self.nb_occ[j], number_occupants_building=sum(self.nb_occ),
-                                    initial_day=initial_day, nb_days=nb_days, time_resolution=time_resolution,
-                                    building=self.building)
-                self.dhw = self.dhw + temp_obj.generate_dhw_profile(building=building, holidays=holidays)
+                for future in futures:
 
-                # Occupancy profile in a flat
-                self.occ = self.occ + temp_obj.generate_occupancy_profiles_residential()
-                self.elec = self.elec + temp_obj.generate_el_profile_residential(holidays=holidays,
-                                                                                 irradiance=irradiation,
-                                                                                 el_wrapper=self.el_wrapper[j],
-                                                                                 annual_demand=self.annual_el_demand_per_flat[j])
+                    (dhw_flat, occ_flat, elec_flat, gains_flat, EV_carprofile_f,
+                     EV_on_demand_charging_f, ev_capacity_f, ice_carprofile_f,
+                     individual_car_profiles_f) = future.result()
 
-                self.gains = self.gains + temp_obj.generate_gain_profile_residential()
-                if gen_cars:
-                    (EV_carprofile, EV_on_demand_charging, ev_capacity,
-                     ice_carprofile, individual_car_profiles) = temp_obj.generate_car_profile(
-                         building=building,
-                         building_devices_data=building_devices_data,
-                         holidays=holidays,
-                         start_index_car=current_index)
+                    # Thread-save addition of values
+                    self.dhw += dhw_flat
+                    self.occ += occ_flat
+                    self.elec += elec_flat
+                    self.gains += gains_flat
 
-                    self.EV_carprofile = self.EV_carprofile + EV_carprofile  # Sum car profiles over all flats in the building
-                    self.EV_carcharging_ondemand = self.EV_carcharging_ondemand + EV_on_demand_charging
-                    self.ev_capacity += ev_capacity
-                    self.ice_carprofile = self.ice_carprofile + ice_carprofile
-                    self.individual_car_profiles.extend(individual_car_profiles)
-                    current_index += len(individual_car_profiles)  # Update the starting index for the next flat of the building
-
+                    if gen_cars:
+                        self.EV_carprofile += EV_carprofile_f
+                        self.EV_carcharging_ondemand += EV_on_demand_charging_f
+                        self.ev_capacity += ev_capacity_f
+                        self.ice_carprofile += ice_carprofile_f
+                        self.individual_car_profiles.extend(individual_car_profiles_f)
         else:
             # Non-residential buildings
             # Define average school holiday day ranges (Julian days)
@@ -716,10 +713,14 @@ class Users:
                 holidays.update(school_holiday_days)
                 holidays = sorted(list(holidays))  # keep format consistent
 
-            temp_obj = Profiles(number_occupants=round(statistics.mean(self.nb_occ)), number_occupants_building=sum(self.nb_occ),initial_day=initial_day, nb_days=nb_days, time_resolution=time_resolution,building=self.building,SIA2024=self.SIA2024)
+            temp_obj = Profiles(number_occupants=round(statistics.mean(self.nb_occ)),
+                                number_occupants_building=sum(self.nb_occ), initial_day=initial_day, nb_days=nb_days,
+                                time_resolution=time_resolution, building=self.building, SIA2024=self.SIA2024)
             # Occupancy profile in the building
-            _,self.occ,_ = temp_obj.generate_profiles_non_residential(holidays = holidays)
-            self.elec = temp_obj.generate_el_profile_non_residential(irradiance=irradiation,el_wrapper=self.el_wrapper[0],annual_demand_app=self.annual_el_demand_zones)
+            _, self.occ, _ = temp_obj.generate_profiles_non_residential(holidays=holidays)
+            self.elec = temp_obj.generate_el_profile_non_residential(irradiance=irradiation,
+                                                                     el_wrapper=self.el_wrapper[0],
+                                                                     annual_demand_app=self.annual_el_demand_zones)
 
             gains_persons, gains_others = temp_obj.generate_gain_profile_non_residential()
             self.gains = gains_persons + gains_others
@@ -729,7 +730,7 @@ class Users:
             # In the case of non-residential buildings, EVs are only for office buildings
             if self.building in {"OB"} and gen_cars:
                 (EV_carprofile, EV_on_demand_charging, ev_capacity,
-                ice_carprofile, individual_car_profiles) = temp_obj.generate_car_profile(
+                 ice_carprofile, individual_car_profiles) = temp_obj.generate_car_profile(
                     building=building,
                     building_devices_data=building_devices_data,
                     holidays=holidays
@@ -739,6 +740,36 @@ class Users:
                 self.ev_capacity += ev_capacity
                 self.ice_carprofile += ice_carprofile
                 self.individual_car_profiles.extend(individual_car_profiles)
+
+    def calcSingleFlat(self, j, irradiation, nb_days, site, holidays, time_resolution, time_horizon, building,
+                       building_devices_data, path, initial_day, gen_cars=True):
+
+        print(f"calculating profiles for flat: {j} of {self.nb_flats} in building: {building['unique_name']}")
+
+        temp_obj = Profiles(number_occupants=self.nb_occ[j], number_occupants_building=sum(self.nb_occ),
+                            initial_day=initial_day, nb_days=nb_days, time_resolution=time_resolution,
+                            building=self.building)
+
+        dhw_flat = temp_obj.generate_dhw_profile(building=building, holidays=holidays)
+        occ_flat = temp_obj.generate_occupancy_profiles_residential()
+        elec_flat = temp_obj.generate_el_profile_residential(holidays=holidays, irradiance=irradiation,
+                                                             el_wrapper=self.el_wrapper[j],
+                                                             annual_demand=self.annual_el_demand_per_flat[j])
+
+        gains_flat = temp_obj.generate_gain_profile_residential()
+
+        # initialize return values in case gen_cars is False
+        EV_carprofile_f, EV_on_demand_charging_f, ev_capacity_f, ice_carprofile_f, individual_car_profiles_f = 0, 0, [], 0, []
+
+        if gen_cars:
+            (EV_carprofile_f, EV_on_demand_charging_f, ev_capacity_f,
+             ice_carprofile_f, individual_car_profiles_f) = temp_obj.generate_car_profile(
+                building=building, building_devices_data=building_devices_data, holidays=holidays,
+                start_index_car=j * 10)
+
+        # return results as tupel
+        return (dhw_flat, occ_flat, elec_flat, gains_flat, EV_carprofile_f, EV_on_demand_charging_f, ev_capacity_f,
+                ice_carprofile_f, individual_car_profiles_f)
 
     def calcHeatingProfile(self, site, envelope, thermal_model, night_setback, is_cooled, calendar, time_resolution, initial_day):
         """

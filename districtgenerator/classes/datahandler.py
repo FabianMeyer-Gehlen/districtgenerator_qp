@@ -679,7 +679,7 @@ class Datahandler:
             building["buildingFeatures"] = building["buildingFeatures"].copy()
             building["buildingFeatures"]["mean_drawoff_dhw"] = bldgs["mean_drawoff_vol_per_day"][index]
 
-    def generateDemands(self, calcUserProfiles=True, saveUserProfiles=True, max_threads=8, gen_cars=True):
+    def generateDemands(self, calcUserProfiles=True, saveUserProfiles=True, max_threads=1, gen_cars=True):
         self.buildings_total = len(self.district)
         self.buildings_completed = 0
         self.save_progress()
@@ -905,7 +905,7 @@ class Datahandler:
                     or any(
                 not isinstance(p, tuple) or len(p) != 2 or not all(isinstance(x, (int, float)) for x in p)
                 for p in self.scenario["position"]))
-            
+
             if missing_positions:
                 print("No district geometry found — running simple heating network design.")
                 heating_network_simple.heating_network(self)
@@ -1405,7 +1405,7 @@ class Datahandler:
             error_message = "The following optimization runs failed:\n"
             for year, cluster in failed_optimizations:
                 error_message += f"  - Year: {year}, Cluster: {cluster}\n"
-            
+
             raise Exception(error_message)
 
         end_time = time.time()
