@@ -81,7 +81,7 @@ class Users:
         else:
             self.nb_main_rooms = int(value)
 
-    def __init__(self, building, area, year_of_construction, retrofit, SIA2024=None, nb_flats=None):
+    def __init__(self, building, area, year_of_construction, retrofit, SIA2024=None, nb_flats=None, nb_occ_per_flat=None):
         """
         Constructor of Users class.
 
@@ -104,6 +104,7 @@ class Users:
         self.bulbs_power = []
         self.el_wrapper = []
         self.nb_occ = []
+        self.nb_occ_per_flat = nb_occ_per_flat
         self.occ = None
         self.dhw = None
         self.elec = None
@@ -276,7 +277,11 @@ class Users:
         None.
         """
 
-        if self.building == "SFH":
+        if self.nb_occ_per_flat is not None:
+            for k in range(self.nb_flats):
+                self.nb_occ.append(self.nb_occ_per_flat)
+
+        elif self.building == "SFH":
             # choose random number of occupants (1-5) for single family houses  (assumption)
             # Probabilities of having 1, 2, 3, 4 or 5 occupants in a single-family house, assuming a maximum of 5 occupants.
             # Sources: https://www.destatis.de/DE/Themen/Gesellschaft-Umwelt/Wohnen/Tabellen/tabelle-wo2-mietwohnungen.html

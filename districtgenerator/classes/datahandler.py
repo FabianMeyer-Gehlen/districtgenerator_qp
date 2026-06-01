@@ -660,7 +660,8 @@ class Datahandler:
                                      year_of_construction=building["buildingFeatures"]["year"],
                                      retrofit=building["buildingFeatures"]["retrofit"],
                                      SIA2024=self.SIA2024,
-                                     nb_flats=building["buildingFeatures"]["nb_flats"])
+                                     nb_flats=building["buildingFeatures"]["nb_flats"],
+                                     nb_occ_per_flat=building["buildingFeatures"]["nb_occ_per_flat"],)
 
             night_setback = building["buildingFeatures"]["night_setback"]
             # %% calculate design heat loads
