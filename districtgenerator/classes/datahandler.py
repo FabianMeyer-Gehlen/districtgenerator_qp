@@ -655,13 +655,22 @@ class Datahandler:
 
             # %% create user object
             # containing number occupants, electricity demand,...
+            try:
+                nb_flats = building["buildingFeatures"]["nb_flats"]
+            except KeyError:
+                nb_flats = None
+            try:
+                nb_occ_per_flat = building["buildingFeatures"]["nb_occ_per_flat"]
+            except KeyError:
+                nb_occ_per_flat = None
+
             building["user"] = Users(building=building["buildingFeatures"]["building"],
                                      area=building["buildingFeatures"]["area"],
                                      year_of_construction=building["buildingFeatures"]["year"],
                                      retrofit=building["buildingFeatures"]["retrofit"],
                                      SIA2024=self.SIA2024,
-                                     nb_flats=building["buildingFeatures"]["nb_flats"],
-                                     nb_occ_per_flat=building["buildingFeatures"]["nb_occ_per_flat"],)
+                                     nb_flats=nb_flats,
+                                     nb_occ_per_flat=nb_occ_per_flat,)
 
             night_setback = building["buildingFeatures"]["night_setback"]
             # %% calculate design heat loads
