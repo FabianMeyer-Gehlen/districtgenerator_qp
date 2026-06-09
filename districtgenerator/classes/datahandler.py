@@ -549,29 +549,32 @@ class Datahandler:
                 # - Calculating the total number of floors by dividing the building’s total floor area
                 #   by the selected single-floor area.
 
-                if building_type == "single_family_house":
-                    one_floor_area = rd.randint(62, 115)  # Source: TABULA German Building Typology
-                    # Calculate the number of floors, rounding to the nearest integer and ensuring at least 1
-                    number_of_floors = max(1, round(building["buildingFeatures"]["area"] / one_floor_area))
+                try:
+                    number_of_floors = building["buildingFeatures"]["nb_floors"]
+                except KeyError:
+                    if building_type == "single_family_house":
+                        one_floor_area = rd.randint(62, 115)  # Source: TABULA German Building Typology
+                        # Calculate the number of floors, rounding to the nearest integer and ensuring at least 1
+                        number_of_floors = max(1, round(building["buildingFeatures"]["area"] / one_floor_area))
 
-                elif building_type == "terraced_house":
-                    one_floor_area = rd.randint(50, 73)  # Source: TABULA German Building Typology
-                    # Calculate the number of floors, rounding to the nearest integer and ensuring at least 1
-                    number_of_floors = max(1, round(building["buildingFeatures"]["area"] / one_floor_area))
+                    elif building_type == "terraced_house":
+                        one_floor_area = rd.randint(50, 73)  # Source: TABULA German Building Typology
+                        # Calculate the number of floors, rounding to the nearest integer and ensuring at least 1
+                        number_of_floors = max(1, round(building["buildingFeatures"]["area"] / one_floor_area))
 
-                elif building_type == "multi_family_house":
-                    # Generate a valid one-floor area and number of floors in one step
-                    one_floor_area = rd.randint(102, 971) # Source: TABULA German Building Typology
-                    # Calculate the number of floors, rounding to the nearest integer and ensuring at least 2
-                    number_of_floors = max(2, round(building["buildingFeatures"]["area"] / one_floor_area))
-                    # Cap the number of floors to a maximum of 8
-                    if number_of_floors > 8:
-                        number_of_floors = 8
+                    elif building_type == "multi_family_house":
+                        # Generate a valid one-floor area and number of floors in one step
+                        one_floor_area = rd.randint(102, 971) # Source: TABULA German Building Typology
+                        # Calculate the number of floors, rounding to the nearest integer and ensuring at least 2
+                        number_of_floors = max(2, round(building["buildingFeatures"]["area"] / one_floor_area))
+                        # Cap the number of floors to a maximum of 8
+                        if number_of_floors > 8:
+                            number_of_floors = 8
 
-                elif building_type == "apartment_block":
-                    one_floor_area = rd.randint(350, 540)  # Source: TABULA German Building Typology
-                    # Calculate the number of floors, rounding to the nearest integer and ensuring at least 3
-                    number_of_floors = max(3, round(building["buildingFeatures"]["area"] / one_floor_area))
+                    elif building_type == "apartment_block":
+                        one_floor_area = rd.randint(350, 540)  # Source: TABULA German Building Typology
+                        # Calculate the number of floors, rounding to the nearest integer and ensuring at least 3
+                        number_of_floors = max(3, round(building["buildingFeatures"]["area"] / one_floor_area))
 
                 # Determining the typical floor height based on the building's construction year.
                 # Older buildings (constructed before 1960) generally have higher ceilings, while newer buildings
