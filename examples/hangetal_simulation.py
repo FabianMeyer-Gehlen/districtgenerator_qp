@@ -11,17 +11,35 @@ from districtgenerator.classes import *
 def hangetal_simulation():
 
     # Initialize District
-    data = Datahandler(scenario_name = "Hangetal", env_path=".env.CONFIG.Hangetal2015")
+    # data = Datahandler(env_path=".env.Hangetal_ist_2015.txt")
+    # data.generateDistrictComplete(calcUserProfiles=False, saveUserProfiles=False, gen_cars=False)
+    # data.optimizationClusters()
+    # data.calculateKPIs()
+    # data.KPIs.create_certificate(data=data, result_path=data.resultPath)
 
-    data.generateDistrictComplete(calcUserProfiles=True, saveUserProfiles=True, gen_cars=False)
+    # data = Datahandler(env_path=".env.Hangetal_erweitert_2015_gesamtwirtschaftlich.txt")
+    # data.generateDistrictComplete(calcUserProfiles=False, saveUserProfiles=True, gen_cars=False)
+    # data.optimizationClusters()
+    # data.calculateKPIs()
+    # data.KPIs.create_certificate(data=data, result_path=data.resultPath)
 
-    # Calculation of the devices' optimal operation
+    data = Datahandler(env_path=".env.Hangetal_erweitert_2015_mieter.txt")
+    data.generateDistrictComplete(calcUserProfiles=False, saveUserProfiles=True, gen_cars=False)
     data.optimizationClusters()
-
-    # Calculation of the key performance indicators using the devices' operation profiles of clustered time periods
     data.calculateKPIs()
-    # Create a certificate (PDF) which summarizes the district parameters and calculated KPIs
     data.KPIs.create_certificate(data=data, result_path=data.resultPath)
+
+    # data = Datahandler(env_path=".env.Hangetal_erweitert_2015_oekologisch.txt")
+    # data.generateDistrictComplete(calcUserProfiles=False, saveUserProfiles=True, gen_cars=False)
+    # data.optimizationClusters()
+    # data.calculateKPIs()
+    # data.KPIs.create_certificate(data=data, result_path=data.resultPath)
+    #
+    # data = Datahandler(env_path=".env.Hangetal_erweitert_2015_resilienz.txt")
+    # data.generateDistrictComplete(calcUserProfiles=False, saveUserProfiles=True, gen_cars=False)
+    # data.optimizationClusters()
+    # data.calculateKPIs()
+    # data.KPIs.create_certificate(data=data, result_path=data.resultPath)
 
     print("Congratulations! You calculated an optimized device operation for the selected neighborhood!")
     return data
