@@ -560,29 +560,32 @@ class Datahandler:
                 # - Calculating the total number of floors by dividing the building’s total floor area
                 #   by the selected single-floor area.
 
-                if building_type == "single_family_house":
-                    one_floor_area = rd.randint(62, 115)  # Source: TABULA German Building Typology
-                    # Calculate the number of floors, rounding to the nearest integer and ensuring at least 1
-                    number_of_floors = max(1, round(building["buildingFeatures"]["area"] / one_floor_area))
+                try:
+                    number_of_floors = building["buildingFeatures"]["nb_floors"]
+                except KeyError:
+                    if building_type == "single_family_house":
+                        one_floor_area = rd.randint(62, 115)  # Source: TABULA German Building Typology
+                        # Calculate the number of floors, rounding to the nearest integer and ensuring at least 1
+                        number_of_floors = max(1, round(building["buildingFeatures"]["area"] / one_floor_area))
 
-                elif building_type == "terraced_house":
-                    one_floor_area = rd.randint(50, 73)  # Source: TABULA German Building Typology
-                    # Calculate the number of floors, rounding to the nearest integer and ensuring at least 1
-                    number_of_floors = max(1, round(building["buildingFeatures"]["area"] / one_floor_area))
+                    elif building_type == "terraced_house":
+                        one_floor_area = rd.randint(50, 73)  # Source: TABULA German Building Typology
+                        # Calculate the number of floors, rounding to the nearest integer and ensuring at least 1
+                        number_of_floors = max(1, round(building["buildingFeatures"]["area"] / one_floor_area))
 
-                elif building_type == "multi_family_house":
-                    # Generate a valid one-floor area and number of floors in one step
-                    one_floor_area = rd.randint(102, 971) # Source: TABULA German Building Typology
-                    # Calculate the number of floors, rounding to the nearest integer and ensuring at least 2
-                    number_of_floors = max(2, round(building["buildingFeatures"]["area"] / one_floor_area))
-                    # Cap the number of floors to a maximum of 8
-                    if number_of_floors > 8:
-                        number_of_floors = 8
+                    elif building_type == "multi_family_house":
+                        # Generate a valid one-floor area and number of floors in one step
+                        one_floor_area = rd.randint(102, 971) # Source: TABULA German Building Typology
+                        # Calculate the number of floors, rounding to the nearest integer and ensuring at least 2
+                        number_of_floors = max(2, round(building["buildingFeatures"]["area"] / one_floor_area))
+                        # Cap the number of floors to a maximum of 8
+                        if number_of_floors > 8:
+                            number_of_floors = 8
 
-                elif building_type == "apartment_block":
-                    one_floor_area = rd.randint(350, 540)  # Source: TABULA German Building Typology
-                    # Calculate the number of floors, rounding to the nearest integer and ensuring at least 3
-                    number_of_floors = max(3, round(building["buildingFeatures"]["area"] / one_floor_area))
+                    elif building_type == "apartment_block":
+                        one_floor_area = rd.randint(350, 540)  # Source: TABULA German Building Typology
+                        # Calculate the number of floors, rounding to the nearest integer and ensuring at least 3
+                        number_of_floors = max(3, round(building["buildingFeatures"]["area"] / one_floor_area))
 
                 # Determining the typical floor height based on the building's construction year.
                 # Older buildings (constructed before 1960) generally have higher ceilings, while newer buildings
@@ -666,11 +669,22 @@ class Datahandler:
 
             # %% create user object
             # containing number occupants, electricity demand,...
+            try:
+                nb_flats = building["buildingFeatures"]["nb_flats"]
+            except KeyError:
+                nb_flats = None
+            try:
+                nb_occ_per_flat = building["buildingFeatures"]["nb_occ_per_flat"]
+            except KeyError:
+                nb_occ_per_flat = None
+
             building["user"] = Users(building=building["buildingFeatures"]["building"],
                                      area=building["buildingFeatures"]["area"],
                                      year_of_construction=building["buildingFeatures"]["year"],
                                      retrofit=building["buildingFeatures"]["retrofit"],
-                                     SIA2024=self.SIA2024)
+                                     SIA2024=self.SIA2024,
+                                     nb_flats=nb_flats,
+                                     nb_occ_per_flat=nb_occ_per_flat,)
 
             night_setback = building["buildingFeatures"]["night_setback"]
             # %% calculate design heat loads
@@ -690,7 +704,7 @@ class Datahandler:
             building["buildingFeatures"] = building["buildingFeatures"].copy()
             building["buildingFeatures"]["mean_drawoff_dhw"] = bldgs["mean_drawoff_vol_per_day"][index]
 
-    def generateDemands(self, calcUserProfiles=True, saveUserProfiles=True, max_threads=8, gen_cars=True):
+    def generateDemands(self, calcUserProfiles=True, saveUserProfiles=True, max_threads=1, gen_cars=True):
         self.buildings_total = len(self.district)
         self.buildings_completed = 0
         self.save_progress()
@@ -1450,7 +1464,7 @@ class Datahandler:
             error_message = "The following optimization runs failed:\n"
             for year, cluster in failed_optimizations:
                 error_message += f"  - Year: {year}, Cluster: {cluster}\n"
-            
+
             raise Exception(error_message)
 
         end_time = time.time()

@@ -172,7 +172,7 @@ class DesignBuildingConfig(BaseSettings):
     # The additional power required by the heating system to meet the domestic hot water demand per square meter in the building types:
     # SFH, MFH, TH, AB, OB, SC, GS, and RE.
     # Source: SIA2024 Standard-Nutzungsbedingungen für die Energie- und Gebäudetechnik"
-    dhwpower: list = field(default_factory=lambda: [3, 3, 3, 3, 7.1, 8.6, 7.2, 24])
+    dhwpower: list = field(default_factory=lambda: [3, 3, 3, 10, 7.1, 8.6, 7.2, 24])
     # Mean drawoff DHW volume per day and person for each building type (SFH, MFH, TH, AB, OB, SC, GS, RE).
     # Source: 12831-3/A100 Table NA.4 for residential buildings and SIA2024 Standard-Nutzungsbedingungen für die Energie- und Gebäudetechnik for non-residential buildings
     mean_drawoff_vol_per_day: list = field(default_factory=lambda: [40, 40, 40, 40, 6, 1.5, 1.5, 8])
@@ -193,7 +193,7 @@ class EcoConfig(BaseSettings):
 
     # The interpolation points can be either defined by specifying the exact years in interpolation_points or by choosing a number of interpolation points num_interpolation_points.
     # *Warning: num_interpolation_points overrides interpolation_points if both are specified.
-    num_interpolation_points: Optional[int] = None # Number of interpolation points if not None these are used, otherwise the exact position is used
+    num_interpolation_points: Optional[int] = 1 # Number of interpolation points if not None these are used, otherwise the exact position is used
     interpolation_points: str | list[int] = [0,5,10,15] # Exact interpolation points if num_interpolation_points is None, these points are used for interpolation
 
 

@@ -1472,6 +1472,8 @@ def build_model(model, data, year, cluster, sim_ecoData):
     def daily_peak_selection_rule(model, d):
         d_int = int(d)
         day_start = d_int * int(24 / dt)
+        if day_start >= len(time_steps):
+            return model.daily_peak[d] == 0
         day_end = min(day_start + int(24 / dt), len(time_steps))
         return sum(model.is_daily_peak[d, t] for t in range(day_start, day_end)) == 1
 
