@@ -685,12 +685,13 @@ class Users:
 
                 for future in futures:
 
-                    (dhw_flat, occ_flat, elec_flat, gains_flat, EV_carprofile_f,
+                    (dhw_flat, dhw_minutely_flat, occ_flat, elec_flat, gains_flat, EV_carprofile_f,
                      EV_on_demand_charging_f, ev_capacity_f, ice_carprofile_f,
                      individual_car_profiles_f) = future.result()
 
                     # Thread-save addition of values
                     self.dhw += dhw_flat
+                    self.dhw_minutely += dhw_minutely_flat
                     self.occ += occ_flat
                     self.elec += elec_flat
                     self.gains += gains_flat
@@ -762,7 +763,10 @@ class Users:
                             initial_day=initial_day, nb_days=nb_days, time_resolution=time_resolution,
                             building=self.building)
 
-        dhw_flat = temp_obj.generate_dhw_profile(building=building, holidays=holidays)
+        dhw_dict = temp_obj.generate_dhw_profile(building=building, holidays=holidays)
+        dhw_flat = dhw_dict["dhw_power_timeseries_W"]
+        dhw_minutely_flat = dhw_dict["dhw_power_timeseries_W_minutely"]
+
         occ_flat = temp_obj.generate_occupancy_profiles_residential()
         elec_flat = temp_obj.generate_el_profile_residential(holidays=holidays, irradiance=irradiation,
                                                              el_wrapper=self.el_wrapper[j],
@@ -780,7 +784,7 @@ class Users:
                 start_index_car=j * 10)
 
         # return results as tupel
-        return (dhw_flat, occ_flat, elec_flat, gains_flat, EV_carprofile_f, EV_on_demand_charging_f, ev_capacity_f,
+        return (dhw_flat, dhw_minutely_flat, occ_flat, elec_flat, gains_flat, EV_carprofile_f, EV_on_demand_charging_f, ev_capacity_f,
                 ice_carprofile_f, individual_car_profiles_f)
 
     def calcHeatingProfile(self, site, envelope, thermal_model, night_setback, is_cooled, calendar, time_resolution, initial_day):
