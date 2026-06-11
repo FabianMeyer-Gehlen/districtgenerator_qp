@@ -228,8 +228,19 @@ class Datahandler:
         # %% load scenario file with building information
         self.scenario = (pd.read_csv(os.path.join(self.scenario_file_path, f"{self.scenario_name}.csv"), delimiter=";",
                                      converters={"position": parse_position}).set_index("id", drop=False))
+        
+        # --- 3. Determine for each building if an dhw_heater is set ---
 
-        # --- 3. Load pipe data based on the selected heat grid generation ---
+        if "dhw_heater" not in self.scenario.columns:
+            self.scenario["dhw_heater"] = None
+        else: 
+            # Replace empty values, NaNs, and 0 with None
+            self.scenario["dhw_heater"] = self.scenario["dhw_heater"].replace({np.nan: None, "": None, 0: None, "0": None, 0.0: None})
+
+            # Replace 1 values with "EH_DHW"
+            self.scenario["dhw_heater"] = self.scenario["dhw_heater"].replace({1: "EH_DHW", "1": "EH_DHW", 1.0: "EH_DHW"})
+
+        # --- 4. Load pipe data based on the selected heat grid generation ---
 
         self.pipe_file_path = os.path.join(self.filePath, 'pipe')
         # select the pipe file based on the generation selection
@@ -728,10 +739,10 @@ class Datahandler:
             building = next(b for b in self.district if b["unique_name"] == result["unique_name"])
             building["user"].elec = result["elec"]
             building["user"].dhw = result["dhw"]
+            building["user"].dhw_minutely = result.get("dhw_minutely")
             building["user"].cooling = result["cooling"]
             building["user"].heat = result["heating"]
 
-            # IMPORTANT: remove the trailing comma (your current code makes this a 1-tuple)
             building["user"].occ = result["occ"]
 
             building["user"].EV_carcharging_ondemand =  result["EV_carcharging_ondemand"]
@@ -785,6 +796,7 @@ class Datahandler:
                 self.saveProfiles(name=building["unique_name"],
                                   elec=building["user"].elec,
                                   dhw=building["user"].dhw,
+                                  dhw_minutely=building["user"].dhw_minutely,
                                   occ=building["user"].occ,
                                   gains=building["user"].gains,
                                   EV_carcharging_ondemand=building["user"].EV_carcharging_ondemand,
@@ -800,7 +812,7 @@ class Datahandler:
                                   individual_car_profiles=building["user"].individual_car_profiles)
 
         else:
-            (building["user"].elec, building["user"].dhw,
+            (building["user"].elec, building["user"].dhw, building["user"].dhw_minutely,
              building["user"].occ, building["user"].gains,
              building["user"].EV_carcharging_ondemand, building["user"].EV_carprofile, building["user"].ice_carprofile, building["user"].nb_flats, building["user"].nb_main_rooms,
              building["user"].nb_occ, building["user"].ev_capacity, building["envelope"].heatload,
@@ -850,6 +862,7 @@ class Datahandler:
             "unique_name": building["unique_name"],
             "elec": building["user"].elec,
             "dhw": building["user"].dhw,
+            "dhw_minutely": building["user"].dhw_minutely,
             "cooling": building["user"].cooling,
             "heating": building["user"].heat,
             "occ": building["user"].occ,
@@ -865,7 +878,7 @@ class Datahandler:
             "night_setback": building["buildingFeatures"]["night_setback"],
         }
 
-    def generateDistrictComplete(self, calcUserProfiles=True, saveUserProfiles=True, gen_cars=True):
+    def generateDistrictComplete(self, calcUserProfiles=True, saveUserProfiles=True, gen_cars=True, designEnergyhub=False):
 
         """
         All in one solution for district and demand generation.
@@ -882,18 +895,11 @@ class Datahandler:
         saveUserProfiles: bool, optional
             True for saving calculated user profiles in workspace (Only taken into account if calcUserProfile is True).
             The default is True.
-        fileName_centralSystems : string, optional
-            File name of the CSV-file that will be loaded. The default is "central_devices_test".
-        saveGenProfiles: bool, optional
-            Decision if generation profiles of designed devices will be saved. Just relevant if 'designDevs=True'.
-            The default is True.
-        designDevs: bool, optional
-            Decision if devices will be designed. The default is False.
-        clustering: bool, optional
-            Decision if profiles will be clustered. The default is False.
-        optimization: bool, optional
-            Decision if the operation costs for each cluster will be optimized. The default is False.
-
+        gen_cars: bool, optional
+            True for generating car profiles, False to skip this step (Only taken into account if calcUserProfile is True).
+        designEnergyhub: bool, optional
+            Decision if energy hub will be designed. The default is False.
+        
         Returns
         -------
         None.
@@ -909,7 +915,7 @@ class Datahandler:
             building["buildingFeatures"]["heater"] == "heat_grid"
             for building in self.district)
 
-        if has_heat_grid:
+        if has_heat_grid or designEnergyhub:
             # Verify geometry data (district_parameters)
 
             # --- Check if building positions are available and valid ---
@@ -919,15 +925,24 @@ class Datahandler:
                     or any(
                 not isinstance(p, tuple) or len(p) != 2 or not all(isinstance(x, (int, float)) for x in p)
                 for p in self.scenario["position"]))
+            
+            if has_heat_grid:
+                if missing_positions:
+                    print("No district geometry found — running simple heating network design.")
+                    heating_network_simple.heating_network(self)
+                else:
+                    print("Generating and optimizing heating network...")
+                    self.generateNetwork(topology_option="node")
+                    self.prepareClusteringInputs()
+                    self.optimization_heatingnetwork()
 
-            if missing_positions:
-                print("No district geometry found — running simple heating network design.")
-                heating_network_simple.heating_network(self)
-            else:
-                print("Generating and optimizing heating network...")
-                self.generateNetwork(topology_option="node")
-                self.prepareClusteringInputs()
-                self.optimization_heatingnetwork()
+            else: 
+                ts_length = len(self.district[0]["user"].heat)
+                self.heat_grid_data["total_losses_heating_network"] = np.zeros(ts_length)
+                self.heat_grid_data["total_losses_cooling_network"] = np.zeros(ts_length)
+                self.heat_grid_data["pump_power"] = np.zeros(ts_length)
+                self.heat_grid_data["ann_costs"] = 0
+                self.heat_grid_data["om_costs"] = 0
 
             self.designCentralDevices(saveGenerationProfiles=True)
             self.finalizeClusterProfiles()
@@ -936,7 +951,7 @@ class Datahandler:
             self.centralDevices = {}
             self.prepareClusteringInputs()
 
-    def saveProfiles(self, name, elec, dhw, occ, gains, EV_carcharging_ondemand,
+    def saveProfiles(self, name, elec, dhw, dhw_minutely, occ, gains, EV_carcharging_ondemand,
                      EV_carprofile, ev_capacity, ice_carprofile, nb_units,
                      nb_occ, heatload, bivalent, heatlimit, path,
                      individual_car_profiles=None):
@@ -951,6 +966,8 @@ class Datahandler:
             Hourly electricity demand in W.
         dhw : list
             Hourly domestic hot water demand in W.
+        dhw_minutely : list
+            Minutely domestic hot water demand in W.
         occ : list
             Hourly occupancy of persons.
         gains : list
@@ -1014,7 +1031,11 @@ class Datahandler:
                     ts_dict[f'Car_availability_car_{i}'] = car['availability_profile']
 
         df_ts = pd.DataFrame(ts_dict)
-        df_ts.to_csv(os.path.join(path, f"{name}_timeseries.csv"), index=False)
+        df_ts.to_csv(
+            os.path.join(path, f"{name}_timeseries.csv"), 
+            sep=';',
+            index=False
+        )
 
         # Singular Data points (static)
         static_dict = {
@@ -1035,6 +1056,20 @@ class Datahandler:
             index=False,
             float_format='%.3f'
         )
+
+        # Minutely timeseries data points (currently only used for domestic hot water demand)
+        ts_minutely_dict = {
+            'timestep': np.arange(len(dhw_minutely)) * (1 / 60),  # Index-Column (hour of the year)
+            'dhw_minutely': dhw_minutely
+        }
+
+        df_ts_minutely = pd.DataFrame(ts_minutely_dict)
+        df_ts_minutely.to_csv(
+            os.path.join(path, f"{name}_timeseries_minutely.csv"), 
+            sep=';',
+            index=False
+        )
+
 
     def saveHeatingProfile(self, heat, cooling, name, path):
         """
@@ -1057,7 +1092,7 @@ class Datahandler:
         """
         ts_path = os.path.join(path, f"{name}_timeseries.csv")
         if os.path.exists(ts_path):
-            df_ts = pd.read_csv(ts_path)
+            df_ts = pd.read_csv(ts_path, sep=';')
         else:
             df_ts = pd.DataFrame()
 
@@ -1085,14 +1120,24 @@ class Datahandler:
         """
         ts_path = os.path.join(path, f"{name}_timeseries.csv")
         static_path = os.path.join(path, f"{name}_static.csv")
+        ts_minutely_path = os.path.join(path, f"{name}_timeseries_minutely.csv")
+
+        error_msg= "Before loading profiles, please make sure to generate them first by setting calcUserProfiles to True in the generateDistrictComplete function. If you have already generated the profiles, please check if the files exist in the specified path."
+
+        if not os.path.exists(ts_path): raise FileNotFoundError(f"Timeseries file not found: {ts_path} \n{error_msg}")
+        if not os.path.exists(static_path): raise FileNotFoundError(f"Static file not found: {static_path} \n{error_msg}")
+        if not os.path.exists(ts_minutely_path): raise FileNotFoundError(f"Minutely timeseries file not found: {ts_minutely_path} \n{error_msg}")
 
         df_ts = pd.read_csv(ts_path, sep=";")
-        df_static = pd.read_csv(static_path, sep=";")
+        df_static = pd.read_csv(static_path, sep=";") 
+        df_ts_minutely = pd.read_csv(ts_minutely_path, sep=";")
 
         elec = df_ts['elec'].to_numpy()
         dhw = df_ts['dhw'].to_numpy()
         occ = df_ts['occ'].to_numpy()
         gains = df_ts['gains'].to_numpy()
+
+        dhw_minutely = df_ts_minutely['dhw_minutely'].to_numpy()
 
         nb_flats = int(df_static['nb_units'].iloc[0])
         nb_main_rooms = nb_flats
@@ -1139,7 +1184,7 @@ class Datahandler:
             EV_carcharging_ondemand = np.zeros(length)
             ice_carprofile = np.zeros(length)
 
-        return elec, dhw, occ, gains, EV_carcharging_ondemand, EV_carprofile, ice_carprofile, nb_flats, nb_main_rooms, nb_occ, ev_capacity, heatload, bivalent, heatlimit, individual_car_profiles
+        return elec, dhw, dhw_minutely, occ, gains, EV_carcharging_ondemand, EV_carprofile, ice_carprofile, nb_flats, nb_main_rooms, nb_occ, ev_capacity, heatload, bivalent, heatlimit, individual_car_profiles
 
     def loadHeatingProfiles(self, name, path):
         """
@@ -1391,7 +1436,7 @@ class Datahandler:
         self.resultsOptimization = {year: {} for year in simulated_years}
 
         # Remove all solution files from previous optimizations
-        opti_central.remove_previous_models_and_solutions() # For better visibility remove previous solution files
+        opti_central.remove_previous_models_and_solutions(resultPath=self.resultPath) # For better visibility remove previous solution files
 
         # simulate all years
         start_time = time.time()
