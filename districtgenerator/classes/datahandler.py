@@ -1233,18 +1233,21 @@ class Datahandler:
 
             # calculate PV and STC generation
             #building["generationPV"], building["generationSTC"] = \
+
             building["user"].generationPV, building["user"].generationSTC = \
                 sun.calcPVAndSTCProfile(time=self.time,
                                         site=self.site,
                                         devices=self.decentral_device_data,
-                                        area_roof=building["envelope"].A["opaque"]["roof"],
+                                        area_roof=building["buildingFeatures"]["area_roof_solar"],
                                         # In Germany, this is a roof pitch between 30 and 35 degrees
                                         beta=[35],
                                         # surface azimuth angles (Orientation to the south: 0°)
                                         gamma=[building["buildingFeatures"]["gamma_PV"]],
                                         usageFactorPV1=building["buildingFeatures"]["f_PV1"],
                                         usageFactorPV2=building["buildingFeatures"]["f_PV2"],
-                                        usageFactorSTC=building["buildingFeatures"]["f_STC"])
+                                        usageFactorSTC=building["buildingFeatures"]["f_STC"],
+                                        area_vertical_solar=building["buildingFeatures"]["area_vertical_solar"],
+                                        f_vertical_pv=building["buildingFeatures"]["f_vertical_pv"],)
 
             # optionally save generation profiles
             if saveGenerationProfiles == True:

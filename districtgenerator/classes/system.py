@@ -189,8 +189,9 @@ class BES:
                 # design refers to buildable roof area (0.4 * area)
                 BES["BAT"] = buildingFeatures["f_BAT"] \
                              * self.decentral_device_data["PV"]["P_nominal"] \
-                             * building["envelope"].A["opaque"]["roof"] \
-                             * (buildingFeatures["f_PV1"] + buildingFeatures["f_PV2"])
+                             * (buildingFeatures["area_roof_solar"]
+                             * (buildingFeatures["f_PV1"] + buildingFeatures["f_PV2"]) +
+                                buildingFeatures["area_vertical_solar"] * buildingFeatures["f_vertical_pv"])
 
             # electric vehicle (EV)
             if k == "EV":
@@ -201,8 +202,8 @@ class BES:
             if k == "PV":
                 BES["PV"] = {}
                 # f_PV is the fraction of the roof area that is suitable and available for PV installation
-                areaPV_temp = building["envelope"].A["opaque"]["roof"] \
-                              * (buildingFeatures["f_PV1"] + buildingFeatures["f_PV2"])
+                areaPV_temp = buildingFeatures["area_roof_solar"] \
+                              * (buildingFeatures["f_PV1"] + buildingFeatures["f_PV2"]) + buildingFeatures["area_vertical_solar"]*buildingFeatures["f_vertical_pv"]
                 BES["PV"]["nb_modules"] = int(areaPV_temp / self.decentral_device_data["PV"]["area_real"])  # [-]
                 BES["PV"]["area"] = BES["PV"]["nb_modules"] * self.decentral_device_data["PV"]["area_real"]  # [m²]
                 BES["PV"]["P_ref"] = BES["PV"]["area"] * self.decentral_device_data["PV"]["P_nominal"]  # [W]
@@ -211,7 +212,7 @@ class BES:
             if k == "STC":
                 BES["STC"] = {}
                 # f_STC is the fraction of the roof area that is suitable and available for STC installation
-                BES["STC"]["area"] = building["envelope"].A["opaque"]["roof"] \
+                BES["STC"]["area"] = buildingFeatures["area_roof_solar"] \
                                      * buildingFeatures["f_STC"]
 
         return BES

@@ -454,7 +454,7 @@ class Sun:
         return totalRadTiltSurface
 
     def calcPVAndSTCProfile(self, time, site, devices, area_roof, beta=35, gamma=0, usageFactorPV1=0.4, usageFactorPV2=0,
-                            usageFactorSTC=0.2):
+                            usageFactorSTC=0.2, area_vertical_solar=0, f_vertical_pv=0):
         """
         Computation of power profiles for photovoltaic (PV) collectors and solar thermal collectors (STC).
 
@@ -509,8 +509,8 @@ class Sun:
                                      timeZone=site["timeZone"],
                                      location=site["location"],
                                      altitude=site["altitude"],
-                                     beta=beta,
-                                     gamma=gamma,
+                                     beta=[15],
+                                     gamma=[-12.5+90],
                                      beamRadiation=site["SunDirect"],
                                      diffuseRadiation=site["SunDiffuse"],
                                      albedo=site["albedo"])
@@ -521,10 +521,23 @@ class Sun:
                                      timeZone=site["timeZone"],
                                      location=site["location"],
                                      altitude=site["altitude"],
-                                     beta=beta,
-                                     gamma=(((np.array(gamma) + 360) % 360) - 180).tolist(),  # calculating gamma for
+                                     beta=[15],
+                                     gamma=[-12.5-90],  # calculating gamma for
                                      # roof side 2 so that side 2 is opposite to side 1, with respect to the definition
                                      # of gamma (0° = south, 90° = east, 180° = north, -90° = west)
+                                     beamRadiation=site["SunDirect"],
+                                     diffuseRadiation=site["SunDiffuse"],
+                                     albedo=site["albedo"])
+
+        # vertical solar
+        SunRad3 = self.getSolarGains(initialTime=0,
+                                     timeDiscretization=time["timeResolution"],
+                                     timeSteps=time["timeSteps"],
+                                     timeZone=site["timeZone"],
+                                     location=site["location"],
+                                     altitude=site["altitude"],
+                                     beta=[0],  # vertical surface
+                                     gamma=[-12.5],
                                      beamRadiation=site["SunDirect"],
                                      diffuseRadiation=site["SunDiffuse"],
                                      albedo=site["albedo"])
@@ -543,6 +556,7 @@ class Sun:
         # calculate time variant PV efficiency
         eta_PV1 = np.zeros(time["timeSteps"])
         eta_PV2 = np.zeros(time["timeSteps"])
+        eta_PV3 = np.zeros(time["timeSteps"])
         for t in range(time["timeSteps"]):
             # source of formula:
             # 'Temperature Dependent Photovoltaic (PV) Efficiency and Its Effect on PV Production in the World
@@ -568,12 +582,21 @@ class Sun:
                                          * (SunRad2[0][t] / devices["PV"]["G_noct"])
                                  )
                          )
+            eta_PV3[t] = devices["PV"]["eta_el_ref"] * \
+                         (
+                                 1 - devices["PV"]["gamma"] * \
+                                 (
+                                         temperatureProfile[t] - devices["PV"]["t_cell_ref"]
+                                         + (devices["PV"]["t_cell_noct"] - temperatureProfile[t])
+                                         * (SunRad3[0][t] / devices["PV"]["G_noct"])
+                                 )
+                         )
 
         # calculate PV power
         generation_PV = np.zeros(time["timeSteps"])
         for t in range(time["timeSteps"]):
             generation_PV[t] = (area_roof) * (1 - kappa_corr) * (
-                    eta_PV1[t] * SunRad1[0][t] * usageFactorPV1 + eta_PV2[t] * SunRad2[0][t] * usageFactorPV2)
+                    eta_PV1[t] * SunRad1[0][t] * usageFactorPV1 + eta_PV2[t] * SunRad2[0][t] * usageFactorPV2) + area_vertical_solar*(1 - kappa_corr) * (eta_PV3[t]*SunRad3[0][t]*f_vertical_pv)
 
         # efficiency of solar thermal collectors (STC)
         temp_diff = np.zeros_like(temperatureProfile)
