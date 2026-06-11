@@ -751,7 +751,7 @@ class Users:
     def calcSingleFlat(self, j, irradiation, nb_days, site, holidays, time_resolution, time_horizon, building,
                        building_devices_data, path, initial_day, gen_cars=True):
 
-        print(f"calculating profiles for flat: {j} of {self.nb_flats} in building: {building['unique_name']}")
+        print(f"calculating profiles for flat: {j+1} of {self.nb_flats} in building: {building['unique_name']}")
 
         temp_obj = Profiles(number_occupants=self.nb_occ[j], number_occupants_building=sum(self.nb_occ),
                             initial_day=initial_day, nb_days=nb_days, time_resolution=time_resolution,
