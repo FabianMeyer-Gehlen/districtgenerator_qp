@@ -11,35 +11,35 @@ from districtgenerator.classes import *
 def hangetal_simulation():
 
     # Initialize District
-    # data = Datahandler(env_path=".env.Hangetal_ist_2015.txt")
-    # data.generateDistrictComplete(calcUserProfiles=False, saveUserProfiles=False, gen_cars=False)
-    # data.optimizationClusters()
-    # data.calculateKPIs()
-    # data.KPIs.create_certificate(data=data, result_path=data.resultPath)
-
-    # data = Datahandler(env_path=".env.Hangetal_erweitert_2015_gesamtwirtschaftlich.txt")
-    # data.generateDistrictComplete(calcUserProfiles=False, saveUserProfiles=True, gen_cars=False)
-    # data.optimizationClusters()
-    # data.calculateKPIs()
-    # data.KPIs.create_certificate(data=data, result_path=data.resultPath)
-
-    data = Datahandler(env_path=".env.Hangetal_erweitert_2015_mieter.txt")
-    data.generateDistrictComplete(calcUserProfiles=False, saveUserProfiles=True, gen_cars=False)
+    data = Datahandler(env_path=".env.Hangetal_ist_2015.txt")
+    data.generateDistrictComplete(calcUserProfiles=False, saveUserProfiles=False, gen_cars=False, designEnergyhub=False)
     data.optimizationClusters()
     data.calculateKPIs()
     data.KPIs.create_certificate(data=data, result_path=data.resultPath)
 
-    # data = Datahandler(env_path=".env.Hangetal_erweitert_2015_oekologisch.txt")
-    # data.generateDistrictComplete(calcUserProfiles=False, saveUserProfiles=True, gen_cars=False)
-    # data.optimizationClusters()
-    # data.calculateKPIs()
-    # data.KPIs.create_certificate(data=data, result_path=data.resultPath)
+    data = Datahandler(env_path=".env.Hangetal_erweitert_2015_gesamtwirtschaftlich.txt")
+    data.generateDistrictComplete(calcUserProfiles=False, saveUserProfiles=True, gen_cars=False, designEnergyhub=False)
+    data.optimizationClusters()
+    data.calculateKPIs()
+    data.KPIs.create_certificate(data=data, result_path=data.resultPath)
+
+    data = Datahandler(env_path=".env.Hangetal_erweitert_2015_elektrisch.txt")
+    data.generateDistrictComplete(calcUserProfiles=False, saveUserProfiles=True, gen_cars=False, designEnergyhub=False)
+    data.optimizationClusters()
+    data.calculateKPIs()
+    data.KPIs.create_certificate(data=data, result_path=data.resultPath)
+
+    data = Datahandler(env_path=".env.Hangetal_erweitert_2015_oekologisch.txt")
+    data.generateDistrictComplete(calcUserProfiles=False, saveUserProfiles=True, gen_cars=False, designEnergyhub=False)
+    data.optimizationClusters()
+    data.calculateKPIs()
+    data.KPIs.create_certificate(data=data, result_path=data.resultPath)
     #
-    # data = Datahandler(env_path=".env.Hangetal_erweitert_2015_resilienz.txt")
-    # data.generateDistrictComplete(calcUserProfiles=False, saveUserProfiles=True, gen_cars=False)
-    # data.optimizationClusters()
-    # data.calculateKPIs()
-    # data.KPIs.create_certificate(data=data, result_path=data.resultPath)
+    data = Datahandler(env_path=".env.Hangetal_erweitert_2015_resilienz.txt")
+    data.generateDistrictComplete(calcUserProfiles=False, saveUserProfiles=True, gen_cars=False, designEnergyhub=False)
+    data.optimizationClusters()
+    data.calculateKPIs()
+    data.KPIs.create_certificate(data=data, result_path=data.resultPath)
 
     print("Congratulations! You calculated an optimized device operation for the selected neighborhood!")
     return data

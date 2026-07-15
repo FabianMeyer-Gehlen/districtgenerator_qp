@@ -1348,6 +1348,7 @@ class YearlyStackedBarCharts(BaseReportFlowable):
             bc.height = chart_height
             bc.width = chart_width
             bc.data = chart["series"]
+            bc.barLabelFormat = lambda v: str(int(v))
             bc.categoryAxis.categoryNames = year_labels
             bc.categoryAxis.labels.fontName = axis_font
             bc.categoryAxis.labels.fontSize = axis_size
@@ -2248,6 +2249,7 @@ class CertificateLayout(ReportComponent):
     def create_yearly_bar_charts(self, kpi_data):
         """Creates the yearly stacked bar charts and adds them to the story."""
         costs_data = kpi_data.get("bar_costs_data", [])
+        print(costs_data)
         co2_data = kpi_data.get("bar_co2_data", [])
         obs_time = kpi_data.get("observation_time", None)
         
@@ -2781,6 +2783,8 @@ class DataExtractor(ReportComponent):
             [self.translate("kpi_autonomy_rate"), f"{round(avg_autonomy * 100, 1)} %"],
             [self.translate("kpi_supply_cover_ratio"), f"{round(avg_scf * 100, 1)} %"],
             [self.translate("kpi_demand_cover_ratio"), f"{round(avg_dcf * 100, 1)} %"],
+            [self.translate("average grid consumption"), f"{round(self.kpis.total_W_dem_GCP/obs_time/1000, 0)} MWh/a"],
+            # [self.translate("average grid feed-in"), f"{round(self.kpis.total_W_inj_GCP/obs_time/1000, 0)} MWh/a"]
         ]
 
         # max loads in kW

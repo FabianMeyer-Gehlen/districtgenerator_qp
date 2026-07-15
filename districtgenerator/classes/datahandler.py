@@ -5,7 +5,7 @@ import csv
 import pickle
 import os
 import datetime
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, as_completed
 import time
 import warnings
 import numpy as np
@@ -712,7 +712,7 @@ class Datahandler:
         results = []
 
         # Threads avoid pickling issues on Windows (no spawn, no handle duplication).
-        with ThreadPoolExecutor(max_workers=max_threads) as ex:
+        with ProcessPoolExecutor(max_workers=max_threads) as ex:
             future_map = {
                 ex.submit(self.generate_demands_worker, building, calcUserProfiles, saveUserProfiles, gen_cars): building[
                     "unique_name"]

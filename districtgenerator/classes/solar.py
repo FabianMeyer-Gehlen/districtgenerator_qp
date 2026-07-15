@@ -509,7 +509,7 @@ class Sun:
                                      timeZone=site["timeZone"],
                                      location=site["location"],
                                      altitude=site["altitude"],
-                                     beta=[15],
+                                     beta=[10],
                                      gamma=[-12.5+90],
                                      beamRadiation=site["SunDirect"],
                                      diffuseRadiation=site["SunDiffuse"],
@@ -521,7 +521,7 @@ class Sun:
                                      timeZone=site["timeZone"],
                                      location=site["location"],
                                      altitude=site["altitude"],
-                                     beta=[15],
+                                     beta=[10],
                                      gamma=[-12.5-90],  # calculating gamma for
                                      # roof side 2 so that side 2 is opposite to side 1, with respect to the definition
                                      # of gamma (0° = south, 90° = east, 180° = north, -90° = west)
@@ -536,7 +536,7 @@ class Sun:
                                      timeZone=site["timeZone"],
                                      location=site["location"],
                                      altitude=site["altitude"],
-                                     beta=[0],  # vertical surface
+                                     beta=[90],  # vertical surface
                                      gamma=[-12.5],
                                      beamRadiation=site["SunDirect"],
                                      diffuseRadiation=site["SunDiffuse"],

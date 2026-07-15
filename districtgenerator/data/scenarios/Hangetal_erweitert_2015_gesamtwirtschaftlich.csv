@@ -1,0 +1,9 @@
+id;building;year;retrofit;construction_type;night_setback;area;heater;cooling;EV;f_TES;f_BAT;f_PV1;f_PV2;f_STC;gamma_PV;ev_charging;nb_flats;nb_occ_per_flat;nb_floors;area_roof_solar;area_vertical_solar;f_vertical_pv;dhw_heater
+7783;AB;1970;1;2;0;5401;GHP;0;0;30;0;0.25;0.25;0;0;on_demand;64;2;8;710;180;0;1
+8591;AB;1970;1;2;0;5401;GHP;0;0;30;0;0.25;0.25;0;0;on_demand;64;3;8;680;180;0;1
+9399;AB;1970;1;2;0;5401;GHP;0;0;30;0;0.25;0.25;0;0;on_demand;64;3;8;400;180;0;1
+7175;AB;1970;1;2;0;3799;GHP;0;0;30;0;0.25;0.25;0;0;on_demand;56;2;8;620;0;0;1
+1;MFH;2015;2;2;0;2849;HP;0;0;30;0;0;0;0;0;on_demand;42;2;6;0;0;0;0
+3;MFH;2015;2;2;0;2700;HP;0;0;30;0;0;0;0;0;on_demand;32;3;4;0;0;0;0
+4;MFH;2015;2;2;0;2700;HP;0;0;30;0;0;0;0;0;on_demand;32;3;4;0;0;0;0
+5;MFH;2015;2;2;0;2700;HP;0;0;30;0;0.4;0.4;0;0;on_demand;32;2;4;2300;0;0;0

@@ -98,7 +98,7 @@ class TimeConfig(BaseSettings):
     """
     timeResolution: int = 3600  # Required time resolution in seconds. Tip: 3600 refers to an hourly resolution. 900 to a 15min resolution.
     clusterLength: int = 604800 # Length of cluster. Tip: 604800 refers to one week. 86400 for one day.
-    clusterNumber: int = 4      # Number of clusters
+    clusterNumber: int = 6      # Number of clusters
     dataResolution: int = 3600  # Time resolution of input data in seconds. (If you don't change weather data, here is no need to change).
     dataLength: int = 31536000  # Length of input data in seconds. (If you don't change weather data, here is no need to change).
     #TODO: Move Project Time here
@@ -172,7 +172,7 @@ class DesignBuildingConfig(BaseSettings):
     # The additional power required by the heating system to meet the domestic hot water demand per square meter in the building types:
     # SFH, MFH, TH, AB, OB, SC, GS, and RE.
     # Source: SIA2024 Standard-Nutzungsbedingungen für die Energie- und Gebäudetechnik"
-    dhwpower: list = field(default_factory=lambda: [3, 3, 3, 10, 7.1, 8.6, 7.2, 24])
+    dhwpower: list = field(default_factory=lambda: [3, 3, 3, 3, 7.1, 8.6, 7.2, 24])
     # Mean drawoff DHW volume per day and person for each building type (SFH, MFH, TH, AB, OB, SC, GS, RE).
     # Source: 12831-3/A100 Table NA.4 for residential buildings and SIA2024 Standard-Nutzungsbedingungen für die Energie- und Gebäudetechnik for non-residential buildings
     mean_drawoff_vol_per_day: list = field(default_factory=lambda: [40, 40, 40, 40, 6, 1.5, 1.5, 8])
@@ -963,7 +963,7 @@ class DecentralDeviceConfig(BaseSettings):
     # EH_DHW parameters (instantaneous Electric Heating for Domestic Water) #TODO: Change for plausible values
     EH_DHW__eta_th: float = 1.0  # Thermal efficiency.
     EH_DHW__life_time: int = 25  # Maximum life time in years.
-    EH_DHW__inv_base: float = 40.0  # Unsubsidized investment in €/kW.
+    EH_DHW__inv_base: float = 0.0  # Unsubsidized investment in €/kW.
     EH_DHW__cost_om: float = 0.0096  # Operation and maintenance costs as a fraction of investment costs in 1/year.
     EH_DHW__inv_subsidy_rate: float = 0.0  # Investment subsidy rate as a fraction of investment cost (0 to 1).
     EH_DHW: dict = {}
@@ -1094,7 +1094,7 @@ class CentralDeviceConfig(BaseSettings):
     STC: dict = {}
 
     # CHP parameters (Combined Heat and Power)
-    CHP__feasible: bool = True  # Should this be considered for the central optimization.
+    CHP__feasible: bool = False  # Should this be considered for the central optimization.
     CHP__inv_base: float = 1200  # Unsubsidized investment in €/kW.
     CHP__eta_el: float = 0.4  # Electrical efficiency between 0 and 1.
     CHP__eta_th: float = 0.5  # Thermal efficiency between 0 and 1.
@@ -1106,7 +1106,7 @@ class CentralDeviceConfig(BaseSettings):
     CHP: dict = {}
 
     # BOI parameters (Boiler)
-    BOI__feasible: bool = True  # Should this be considered for the central optimization.
+    BOI__feasible: bool = False  # Should this be considered for the central optimization.
     BOI__inv_base: float = 138  # Unsubsidized investment in €/kW.
     BOI__eta_th: float = 0.99  # Thermal efficiency between 0 and 1.
     BOI__life_time: int = 25  # Maximum life time in years.
@@ -1144,7 +1144,7 @@ class CentralDeviceConfig(BaseSettings):
     HP: dict = {}
 
     # AirHP parameters (Air Source Heat Pump)
-    AirHP__feasible: bool = True  # Should this be considered for the central optimization.
+    AirHP__feasible: bool = False  # Should this be considered for the central optimization.
     AirHP__life_time: int = 25  # Maximum life time in years.
     AirHP__inv_base: float = 1110  # Unsubsidized investment in €/kWth.
     AirHP__cost_om: float = 0.033  # Cost of operation and maintenance as a percentage of investment.
@@ -1164,7 +1164,7 @@ class CentralDeviceConfig(BaseSettings):
     GroundHP: dict = {}
 
     # EB parameters (Electric Boiler)
-    EB__feasible: bool = True  # Should this be considered for the central optimization.
+    EB__feasible: bool = False  # Should this be considered for the central optimization.
     EB__inv_base: float = 32.73  # Unsubsidized investment in €/kW.
     EB__eta_th: float = 0.99  # Thermal efficiency between 0 and 1.
     EB__life_time: int = 25  # Maximum life time in years.
@@ -1299,7 +1299,7 @@ class CentralDeviceConfig(BaseSettings):
     SAB: dict = {}
 
     # TES parameters (Thermal Energy Storage)
-    TES__feasible: bool = True  # Should this be considered for the central optimization.
+    TES__feasible: bool = False  # Should this be considered for the central optimization.
     TES__inv_base: float = 640  # Unsubsidized investment in €/m^3.
     TES__sto_loss: float = 0.01  # Storage loss per hour as a fraction.
     TES__life_time: int = 20  # Maximum life time in years.
